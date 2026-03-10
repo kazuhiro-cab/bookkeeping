@@ -10,8 +10,27 @@
 - 学習履歴、弱点分析、結果エクスポート
 - 著作権区分に基づく出題制御
 
-## 実行方法
+## Windows (venv 前提)
+
+本リポジトリは `venv` を利用して実行します。
+
+1. 依存関係セットアップ
+
+```bat
+setup.bat
+```
+
+2. テスト実行
+
+```bat
+run.bat
+```
+
+## 手動実行
 
 ```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -e .
 python -m unittest discover -s tests
 ```
