@@ -9,12 +9,11 @@ if not exist "%VENV_DIR%\Scripts\python.exe" (
   exit /b 1
 )
 
-echo [run] Running test suite ...
-"%VENV_DIR%\Scripts\python.exe" -m unittest discover -s tests
+echo [run] Launching GUI ...
+"%VENV_DIR%\Scripts\python.exe" -m bookkeeping_app
 if errorlevel 1 (
-  echo [run] Tests failed.
+  echo [run] Application exited with an error.
   exit /b 1
 )
 
-echo [run] Completed successfully.
 endlocal

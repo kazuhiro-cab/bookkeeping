@@ -9,6 +9,7 @@
 - 解説表示、帳簿/財務諸表/原価計算影響データ参照
 - 学習履歴、弱点分析、結果エクスポート
 - 著作権区分に基づく出題制御
+- GUI（Tkinter）による学習フローの基本操作
 
 ## Windows (venv 前提)
 
@@ -20,10 +21,16 @@
 setup.bat
 ```
 
-2. テスト実行
+2. GUI起動
 
 ```bat
 run.bat
+```
+
+3. テスト実行
+
+```bat
+run_tests.bat
 ```
 
 ## 手動実行
@@ -32,5 +39,6 @@ run.bat
 python -m venv .venv
 . .venv/bin/activate
 pip install -e .
+python -m bookkeeping_app
 python -m unittest discover -s tests
 ```
