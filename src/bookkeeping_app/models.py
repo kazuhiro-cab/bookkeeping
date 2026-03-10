@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 from uuid import uuid4
@@ -78,8 +78,8 @@ class LearningSession:
     mode: LearningMode
     status: LearningSessionStatus = LearningSessionStatus.IN_PROGRESS
     id: str = field(default_factory=lambda: str(uuid4()))
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -123,7 +123,7 @@ class QuestionRevision:
     before: Dict
     after: Dict
     id: str = field(default_factory=lambda: str(uuid4()))
-    changed_at: datetime = field(default_factory=datetime.utcnow)
+    changed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -141,7 +141,7 @@ class Answer:
     answer_data: Dict
     answer_status: AnswerStatus
     id: str = field(default_factory=lambda: str(uuid4()))
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass

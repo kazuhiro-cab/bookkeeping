@@ -4,7 +4,7 @@ import csv
 import io
 from collections import defaultdict
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from .models import (
@@ -141,7 +141,7 @@ class BookkeepingService:
                 answer_id=answer.id,
                 points=0,
                 result_status=ResultStatus.SKIPPED,
-                scored_at=datetime.utcnow(),
+                scored_at=datetime.now(timezone.utc),
                 scoring_mode=scoring_mode,
                 basis_answer_id=None,
                 basis="skipped",
@@ -168,7 +168,7 @@ class BookkeepingService:
                 answer_id=answer.id,
                 points=0,
                 result_status=ResultStatus.UNSCORED,
-                scored_at=datetime.utcnow(),
+                scored_at=datetime.now(timezone.utc),
                 scoring_mode=scoring_mode,
                 basis_answer_id=None,
                 basis="no acceptable answer matched",
@@ -212,7 +212,7 @@ class BookkeepingService:
             answer_id=answer.id,
             points=points,
             result_status=status,
-            scored_at=datetime.utcnow(),
+            scored_at=datetime.now(timezone.utc),
             scoring_mode=scoring_mode,
             basis_answer_id=selected.id,
             basis="matched acceptable answer",
@@ -226,7 +226,7 @@ class BookkeepingService:
     def complete_session(self, session_id: str) -> None:
         session = self.learning_sessions[session_id]
         session.status = LearningSessionStatus.COMPLETED
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
     def get_explanations(self, question_id: str) -> List[ExplanationView]:
         return self.explanations[question_id]
