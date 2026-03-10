@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import csv
 import io
+import urllib.request
 from collections import defaultdict
 from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
+
 
 from .models import (
     AcceptableAnswer,
@@ -298,6 +300,95 @@ class BookkeepingService:
         batch.success_rows = success
         batch.failed_rows = failed
         return batch
+
+    def _extract_text_by_page(self, pdf_data: bytes) -> List[str]:
+        try:
+            from pypdf import PdfReader
+        except ModuleNotFoundError as exc:
+            raise ModuleNotFoundError("pypdf が未インストールです。setup.bat を実行してください。") from exc
+
+        reader = PdfReader(io.BytesIO(pdf_data))
+        return [(page.extract_text() or "").strip() for page in reader.pages]
+
+    def import_questions_pdf(
+        self,
+        pdf_data: bytes,
+        changed_by: str,
+        *,
+        mode: LearningMode,
+        topic_id: str,
+        question_type: str,
+        copyright_type: CopyrightType,
+        question_status: QuestionStatus = QuestionStatus.PENDING_REVIEW,
+        owner_user_id: Optional[str] = None,
+        title_prefix: str = "過去問PDF",
+        source_text: Optional[str] = None,
+    ) -> ImportBatch:
+        pages = self._extract_text_by_page(pdf_data)
+        batch = ImportBatch(total_rows=len(pages), success_rows=0, failed_rows=0)
+        self.import_batches.append(batch)
+
+        for idx, page_text in enumerate(pages, start=1):
+            try:
+                if not page_text:
+                    raise ValueError("empty page")
+                question = Question(
+                    title=f"{title_prefix} p.{idx}",
+                    body=page_text,
+                    mode=mode,
+                    topic_id=topic_id,
+                    question_type=question_type,
+                    question_status=question_status,
+                    copyright_type=copyright_type,
+                    owner_user_id=owner_user_id,
+                    source_text=source_text,
+                    reconstructed_text=None,
+                )
+                self.create_question(question, changed_by=changed_by)
+                batch.success_rows += 1
+            except Exception as exc:
+                batch.failed_rows += 1
+                self.import_errors.append(
+                    ImportError(
+                        batch_id=batch.id,
+                        row_no=idx,
+                        error_message=str(exc),
+                        row_data={"title_prefix": title_prefix, "page": idx},
+                    )
+                )
+        return batch
+
+    def import_questions_pdf_from_url(
+        self,
+        pdf_url: str,
+        changed_by: str,
+        *,
+        mode: LearningMode,
+        topic_id: str,
+        question_type: str,
+        copyright_type: CopyrightType,
+        question_status: QuestionStatus = QuestionStatus.PENDING_REVIEW,
+        owner_user_id: Optional[str] = None,
+        title_prefix: str = "過去問PDF",
+    ) -> ImportBatch:
+        with urllib.request.urlopen(pdf_url, timeout=30) as response:
+            content_type = response.headers.get("Content-Type", "")
+            if "pdf" not in content_type.lower() and not pdf_url.lower().endswith(".pdf"):
+                raise ValueError("PDF以外のURLは取り込めません。")
+            pdf_data = response.read()
+
+        return self.import_questions_pdf(
+            pdf_data,
+            changed_by=changed_by,
+            mode=mode,
+            topic_id=topic_id,
+            question_type=question_type,
+            copyright_type=copyright_type,
+            question_status=question_status,
+            owner_user_id=owner_user_id,
+            title_prefix=title_prefix,
+            source_text=pdf_url,
+        )
 
     def export_user_results_csv(self, user_id: str) -> str:
         output = io.StringIO()

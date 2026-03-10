@@ -1,5 +1,7 @@
+import io
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -169,6 +171,44 @@ class WorkflowTests(unittest.TestCase):
         batch = self.service.import_questions_csv(csv_data, changed_by="admin")
         self.assertEqual(batch.success_rows, 1)
         self.assertEqual(batch.failed_rows, 1)
+
+    def test_pdf_import_and_auto_download(self):
+        with patch.object(self.service, "_extract_text_by_page", return_value=["第1問 仕訳", "第2問 仕訳"]):
+            batch = self.service.import_questions_pdf(
+                b"%PDF-1.4 mock",
+                changed_by="admin",
+                mode=LearningMode.DOUBLE_ENTRY,
+                topic_id="past_exam",
+                question_type="総合問題",
+                copyright_type=CopyrightType.LICENSED,
+                question_status=QuestionStatus.PENDING_REVIEW,
+                title_prefix="日商簿記過去問",
+                source_text="manual-pdf",
+            )
+        self.assertEqual(batch.success_rows, 2)
+        created = [q for q in self.service.questions.values() if q.topic_id == "past_exam"]
+        self.assertEqual(len(created), 2)
+
+        fake_response = MagicMock()
+        fake_response.__enter__.return_value = fake_response
+        fake_response.__exit__.return_value = None
+        fake_response.headers = {"Content-Type": "application/pdf"}
+        fake_response.read.return_value = b"%PDF-1.4 downloaded"
+
+        with patch("bookkeeping_app.service.urllib.request.urlopen", return_value=fake_response):
+            with patch.object(self.service, "_extract_text_by_page", return_value=["自動DL過去問"]):
+                auto_batch = self.service.import_questions_pdf_from_url(
+                    "https://example.com/kakomon.pdf",
+                    changed_by="admin",
+                    mode=LearningMode.DOUBLE_ENTRY,
+                    topic_id="past_exam_auto",
+                    question_type="総合問題",
+                    copyright_type=CopyrightType.LICENSED,
+                    question_status=QuestionStatus.PENDING_REVIEW,
+                    title_prefix="自動DL",
+                )
+
+        self.assertEqual(auto_batch.success_rows, 1)
 
 
 if __name__ == "__main__":

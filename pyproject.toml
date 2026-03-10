@@ -7,6 +7,9 @@ name = "bookkeeping-app"
 version = "0.1.0"
 description = "会計処理練習ツール"
 requires-python = ">=3.11"
+dependencies = [
+  "pypdf>=4.0.0",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

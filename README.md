@@ -10,6 +10,7 @@
 - 学習履歴、弱点分析、結果エクスポート
 - 著作権区分に基づく出題制御
 - GUI（Tkinter）による学習フローの基本操作
+- PDF過去問の取込（PDFファイル取込 / URLからの自動ダウンロード取込）
 
 ## Windows (venv 前提)
 
@@ -42,3 +43,13 @@ pip install -e .
 python -m bookkeeping_app
 python -m unittest discover -s tests
 ```
+
+
+### PDF過去問取込
+
+`BookkeepingService` には以下のPDF取込APIがあります。
+
+- `import_questions_pdf(...)`: PDFバイナリからページ単位で問題登録
+- `import_questions_pdf_from_url(...)`: URLからPDFを自動ダウンロードして登録
+
+※ URL取込は `application/pdf` か `.pdf` 拡張子を持つURLのみ受け付けます。
